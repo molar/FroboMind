@@ -26,26 +26,19 @@ double nmea_to_deg(double pos, std::string dir) {
 
 void gpsCallback(const fmMsgs::serial::ConstPtr& msg)
 {
-	std::string nmeadata = msg->data;
-	boost::replace_all(nmeadata, ",,", ", ,"); // needed to not drop any tokens.
- 	boost::char_separator<char> sep(",");
-	tokenizer::iterator tok_iter; 
-	tokenizer tokens(nmeadata, sep);
+	std::string nmeastr = msg->data;
+	boost::replace_all(nmeastr, ",,", ", ,"); // we need to replace ,, with , , to avoid lexical cast problems
+	boost::replace_all(nmeastr, ",,", ", ,"); // replaces the rest of ,, with , , Not pretty but it works
+	boost::char_separator<char> sep(",");
+	tokenizer tokens(nmeastr, sep);
+	std::vector<std::string> nmea;
 
 	try {
-		tok_iter = tokens.begin();
-		if (tok_iter != tokens.end())
-		{
-			std::string nmea_id = boost::lexical_cast<std::string>(*tok_iter++);
-			if (nmea_id == "$GPGGA") {  
-				double nmea_lat;
-				double nmea_lon;
-				std::string nmea_lat_hem;
-				std::string nmea_lon_hem;
+		nmea.assign (tokens.begin(), tokens.end());
 
-//				ROS_INFO("GPGGA received");
-
-				// we need to check the length and the checksum of the nmea string here!!!
+			if (nmea.at(0) == "$GPGGA" && nmea.size() == 15)
+			{
+				// !!! we need to check the checksum of the NMEA string here !!!
 
 				// save current time
 				gpgga_msg.header.stamp = ros::Time::now();
@@ -53,34 +46,38 @@ void gpsCallback(const fmMsgs::serial::ConstPtr& msg)
 				// save data received time
 				gpgga_msg.time_recv = msg->header.stamp;
 
-				// import data from the nmea string
-				gpgga_msg.time = boost::lexical_cast<std::string>(*tok_iter++);
-				nmea_lat = boost::lexical_cast<double>(*tok_iter++);
-				nmea_lat_hem = boost::lexical_cast<std::string>(*tok_iter++);
-				nmea_lon = boost::lexical_cast<double>(*tok_iter++);
-				nmea_lon_hem = boost::lexical_cast<std::string>(*tok_iter++);
-				gpgga_msg.fix = boost::lexical_cast<int>(*tok_iter++);
-				gpgga_msg.sat = boost::lexical_cast<int>(*tok_iter++);
-				gpgga_msg.hdop = boost::lexical_cast<double>(*tok_iter++);
-				gpgga_msg.alt = boost::lexical_cast<double>(*tok_iter++);
-				*tok_iter++; // omit the 'M' for meter
-				gpgga_msg.geoid_height = boost::lexical_cast<double>(*tok_iter++);
-				*tok_iter++; // omit the 'M' for meter
+				// import satellite fix from the NMEA string
+				gpgga_msg.fix = boost::lexical_cast<int>(nmea.at(6));
+				if (gpgga_msg.fix >= 1)
+				{
+					// import data from the NMEA string
+					gpgga_msg.time = boost::lexical_cast<std::string>(nmea.at(1));
+					gpgga_msg.sat = boost::lexical_cast<int>(nmea.at(7));
+					gpgga_msg.hdop = boost::lexical_cast<double>(nmea.at(8));
+					gpgga_msg.alt = boost::lexical_cast<double>(nmea.at(9));
+					gpgga_msg.geoid_height = boost::lexical_cast<double>(nmea.at(11));
 
-				// convert lat/lon from hdm.m to hd.d
-				gpgga_msg.lat = nmea_to_deg (nmea_lat, nmea_lat_hem);
-				gpgga_msg.lon = nmea_to_deg (nmea_lon, nmea_lon_hem);
+					// import lat/lon and convert from hdm.m to hd.d
+					gpgga_msg.lat = nmea_to_deg (boost::lexical_cast<double>(nmea.at(2)), boost::lexical_cast<std::string>(nmea.at(3)));
+					gpgga_msg.lon = nmea_to_deg (boost::lexical_cast<double>(nmea.at(4)), boost::lexical_cast<std::string>(nmea.at(5)));
+				}
+				else {
+					// reset data
+					gpgga_msg.time = "";
+					gpgga_msg.lat = 0;
+					gpgga_msg.lon = 0;
+					gpgga_msg.sat = 0;
+					gpgga_msg.hdop = 0;
+					gpgga_msg.alt = 0;
+					gpgga_msg.geoid_height = 0;
+				}
 
 				// publish the gpgga message
 				gpgga_pub.publish(gpgga_msg);
 			}
-		}
-//		else {
-//			ROS_INFO("gps_parser: tok_iter problem");
-//		}
 	}
 	catch(boost::bad_lexical_cast &) {
-  		ROS_WARN(("gps_parser: bad lexical cast: " + msg->data).c_str());
+  		ROS_WARN("gps_parser: bad lexical cast: %s", msg->data.c_str());
 	}
 }
 
@@ -95,9 +92,8 @@ int main(int argc, char **argv)
 
 	n.param<std::string> ("subscribe_topic_id", subscribe_topic_id, "fmBSP/gps_msg");
 	n.param<std::string> ("publish_topic_id", publish_topic_id, "fmSensors/gpgga_msg");
-//	n.param<std::string> ("frame_id", frame_id, "/base");
 
-	ros::Subscriber sub = n.subscribe(subscribe_topic_id, 1, gpsCallback);
+	ros::Subscriber sub = n.subscribe(subscribe_topic_id, 10, gpsCallback);
 	gpgga_pub = n.advertise<fmMsgs::gpgga> (publish_topic_id, 1);
 
 	ros::spin();

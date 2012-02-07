@@ -67,12 +67,12 @@ int main(int argc, char **argv)
   n.param<std::string> ("subscriber_topic", subscriber_topic, "S0_tx_msg");
   n.param<int> ("baudrate", baudrate, 115200);
 
-  s_publisher = nh.advertise<fmMsgs::serial> (publisher_topic.c_str(), 1);
+  s_publisher = nh.advertise<fmMsgs::serial> (publisher_topic.c_str(), 20,1);
 
   serialInterface serialInterface(s_publisher);
   serialInterface.openDevice(device, baudrate);
 
-  s_subscriber = nh.subscribe<fmMsgs::serial> (subscriber_topic.c_str(), 1000, &serialInterface::writeHandler, &serialInterface);
+  s_subscriber = nh.subscribe<fmMsgs::serial> (subscriber_topic.c_str(), 20, &serialInterface::writeHandler, &serialInterface);
 
   ros::spin();
 
