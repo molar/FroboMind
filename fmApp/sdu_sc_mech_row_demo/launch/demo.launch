@@ -1,0 +1,128 @@
+<!--
+-->
+
+<launch>
+	<!-- Armadillo IV parameters --> 
+	<param name="robot_max_velocity" value="0.6"/>
+	<!-- param name="diff_steer_wheel_radius" value="0.159"/ --> <!-- specified directly as parameters to differential_odometry -->
+	<!-- param name="diff_steer_wheel_ticks_per_rev" value="625"/--> <!-- specified directly as parameters to differential_odometry -->
+	<param name="diff_steer_wheel_distance" value="3.175"/>
+
+	<group ns="fmSensors">
+	</group>
+
+	<group ns="fmDecisionMakers">
+		<node pkg="sdu_weeding_trial_2013" name="mission_control" type="simple_mission.py">
+    		<param name="deadman_topic" value="/fmSignals/deadman" />
+			<param name="cmd_vel_topic" value="/fmSignals/cmd_vel" />
+            <param name="max_linear_velocity" value="0.7"/>
+            <param name="max_angular_velocity" value="0.4"/>
+			<param name="deadband" value="5"/>
+			<param name="reduced_range" value="50"/>
+			<param name="feedback_topic" value="/fmLib/joy/set_feedback" />
+			<param name="joy_topic" value="/fmLib/joy" />
+			<param name="status_topic" value="/fmData/state"/>
+			<param name="publish_frequency" value="10"/>
+		</node>
+	</group>
+
+	<group ns="fmExecutors">
+		<node pkg="sdu_sc_mech_row_demo" type="nav.py" name="nav" output="screen">
+			<param name="line_subscriber_topic" value="/fmData/serial_comm_sensor_rx" />
+			<param name="vel_publisher_topic" value="/fmSignals/cmd_vel" />
+			<param name="automode_sub" value="/fmDecisionMakers/automode" />
+			<param name="input_offset" value="500" />
+			<param name="forward_velocity" value="0.1" />
+		</node>
+		
+		<node name="$(anon load_fix_feeder_psp_params)" pkg="dynamic_reconfigure" type="dynparam" args="set_from_parameters /fmExecutors/nav">
+			<param name="P" 		value="0.001"    />
+			<param name="I" 		value="0"    />
+			<param name="D" 		value="0"    />
+			<param name="Ilim" 		value="0"    />
+    	</node>
+	</group>
+
+	<group ns="fmControllers">
+		<node pkg="differential_ifk" name="differential_driver" type="differential_ifk_node" output="screen" >
+			<param name="hl_subscriber_topic" value="/fmSignals/cmd_vel"/>
+			<param name="ll_publisher_topic_left" value="/fmSignals/cmd_vel_left"/>
+			<param name="ll_publisher_topic_right" value="/fmSignals/cmd_vel_right"/>
+		</node>
+		
+		<node pkg="sdu_armadillo4" type="sdu_armadillo4_node" name="roboteq_left" output="screen">
+			<param name="cmd_vel_ch1_topic" value="/fmSignals/cmd_vel_left"/>
+			<param name="serial_rx_topic" value="/fmData/serial_comm_left_rx" />
+			<param name="serial_tx_topic" value="/fmData/serial_comm_left_tx" />
+			<param name="deadman_topic" value="/fmSignals/deadman"/>
+			<param name="encoder_ch1_topic" value="/fmInformation/encoder_left"/>
+			<param name="power_ch1_topic" value="/fmData/power_left"/>
+			<param name="status_topic" value="/fmData/status"/>
+			<param name="velocity_topic" value="/fmData/velocity_left"/>
+			<param name="ticks_per_meter" value="620"/>
+			<param name="p_gain" value="20"/>
+			<param name="i_gain" value="1"/>
+			<param name="d_gain" value="0"/>
+			<param name="i_max" value="1"/>
+			<param name="max_controller_command" value="120" />
+			<param name="anti_windup_percent" value="50"/>
+			<param name="closed_loop_operation" value="true"/>
+		</node>
+	
+		<node pkg="sdu_armadillo4" type="sdu_armadillo4_node" name="roboteq_right" output="screen">
+			<param name="cmd_vel_ch1_topic" value="/fmSignals/cmd_vel_right"/>
+			<param name="serial_rx_topic" value="/fmData/serial_comm_right_rx" />
+			<param name="serial_tx_topic" value="/fmData/serial_comm_right_tx" />
+			<param name="deadman_topic" value="/fmSignals/deadman"/>
+			<param name="encoder_ch1_topic" value="/fmInformation/encoder_right"/>
+			<param name="power_ch1_topic" value="/fmData/power_right"/>
+			<param name="status_topic" value="/fmData/status"/>
+			<param name="velocity_topic" value="/fmData/velocity_right"/>
+			<param name="ticks_per_meter" value="620"/>
+			<param name="p_gain" value="20"/>
+			<param name="i_gain" value="1"/>
+			<param name="d_gain" value="0"/>
+			<param name="i_max" value="1"/>
+			<param name="max_controller_command" value="120" />
+			<param name="anti_windup_percent" value="50"/>
+			<param name="closed_loop_operation" value="true"/>
+		</node>
+	</group>
+
+	<group ns="fmLib">
+		<!-- Wiimote interface -->
+		<node pkg="wiimote" type="wiimote_node.py" name="wiimote" respawn="true">
+			<!-- param name="fixed_wiimote_address" value="00:1F:32:B3:A2:F3"/ -->	<!-- Kjelds private -->
+			<param name="fixed_wiimote_address" value="00:19:1D:91:DC:27"/> <!-- RoboLab -->
+		</node >		
+
+		<!-- serial communication with the Armadillo IV robot -->
+		<node pkg="serial_string" type="serial_string_node" name="serial_comm_left" output="screen">
+			<param name="publisher_topic" value="/fmData/serial_comm_left_rx" />
+			<param name="subscriber_topic" value="/fmData/serial_comm_left_tx" />
+			<param name="device" value="/dev/left_belt" />
+			<param name="baudrate" value="115200" />
+			<param name="termination_character" value="13" />
+		</node>
+
+		<node pkg="serial_string" type="serial_string_node" name="serial_comm_right" output="screen">
+			<param name="publisher_topic" value="/fmData/serial_comm_right_rx" />
+			<param name="subscriber_topic" value="/fmData/serial_comm_right_tx" />
+			<param name="device" value="/dev/right_belt" />
+			<param name="baudrate" value="115200" />
+			<param name="termination_character" value="13" />
+		</node>
+		
+		<node pkg="serial_string" type="serial_string_node" name="serial_comm_implement" output="screen">
+			<param name="publisher_topic" value="/fmData/serial_comm_sensor_rx" />
+			<param name="subscriber_topic" value="/fmData/serial_comm_sensor_tx" />
+			<param name="device" value="/dev/ttyUSB0" />
+			<param name="baudrate" value="38400" />
+			<param name="termination_character" value="10" />
+		</node>
+
+	</group>
+
+	<!-- enables communication with the implement -->
+	<node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket" output="screen" />
+</launch>

@@ -1,0 +1,10 @@
+\subsubsection usage Usage
+\verbatim
+<node name="sdu_sc_mech_row_demo" pkg="sdu_sc_mech_row_demo" type="sdu_sc_mech_row_demo">
+  <param name="P" type="double" value="0.001" />
+  <param name="I" type="double" value="0.0" />
+  <param name="D" type="double" value="0.0" />
+  <param name="Ilim" type="double" value="0.0" />
+</node>
+\endverbatim
+

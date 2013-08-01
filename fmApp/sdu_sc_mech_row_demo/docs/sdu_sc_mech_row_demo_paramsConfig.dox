@@ -1,0 +1,9 @@
+\subsubsection parameters ROS parameters
+
+Reads and maintains the following parameters on the ROS server
+
+- \b "~P" : \b [double] Proportional gain min: 0.0, default: 0.001, max: 10.0
+- \b "~I" : \b [double] Integral gain min: 0.0, default: 0.0, max: 10.0
+- \b "~D" : \b [double] Differential gain min: 0.0, default: 0.0, max: 10.0
+- \b "~Ilim" : \b [double] Integrator limit min: 0.0, default: 0.0, max: 10.0
+
