@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #/****************************************************************************
 # FroboMind template_cpp_node
 # Copyright (c) 2011-2013, author Kent Stark Olsen kent.stark.olsen@gmail.com
@@ -26,16 +27,13 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #****************************************************************************/
 
-#!/usr/bin/env python
-import roslib; 
-roslib.load_manifest("fmExecutors")
 import rospy
 
 import actionlib
 import math
 from tf import TransformListener, LookupException, ConnectivityException
 
-from fmExecutors.msg import navigate_in_row_simpleAction, navigate_in_row_simpleFeedback,navigate_in_row_simpleGoal,navigate_in_row_simpleResult
+from action_primitives.msg import navigate_rowAction, navigate_rowFeedback,navigate_rowGoal,navigate_rowResult
 
 from msgs.msg import row
 
@@ -57,8 +55,8 @@ class NavigateInRowSimple():
     then the distance driven in the row is returned as a result.
     
     """
-    __feedback_msg = navigate_in_row_simpleFeedback()
-    __goal_msg = navigate_in_row_simpleResult()
+    __feedback_msg = navigate_rowFeedback()
+    __goal_msg = navigate_rowResult()
     
     def __init__(self,name,rowtopic,odom_frame,vehicle_frame):
         """
@@ -93,7 +91,7 @@ class NavigateInRowSimple():
         self.vel_pub = rospy.Publisher("/fmControllers/cmd_vel_auto",Twist)
         
         self._action_name = name
-        self._server = actionlib.SimpleActionServer(self._action_name,navigate_in_row_simpleAction,auto_start=False)
+        self._server = actionlib.SimpleActionServer(self._action_name,navigate_rowAction,auto_start=False)
         self._server.register_goal_callback(self.goal_cb)
         self._server.register_preempt_callback(self.preempt_cb);
         
@@ -101,8 +99,6 @@ class NavigateInRowSimple():
         self._last_row_msg = None
         
         self._server.start()
-        
-        
         
         self._timer = rospy.Timer(rospy.Duration(0.1),self.on_timer)
         

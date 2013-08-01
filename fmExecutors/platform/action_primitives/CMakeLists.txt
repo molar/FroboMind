@@ -32,12 +32,12 @@ find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs msgs rospy tf g
 #   Service2.srv
 # )
 
-add_action_files(DIRECTORY action FILES make_turn.action)
+add_action_files(DIRECTORY action FILES make_turn.action navigate_row.action)
 
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-   actionlib_msgs#   nav_msgs#   visualization_msgs
+   actionlib_msgs std_msgs
  )
 
 ###################################################
