@@ -155,8 +155,9 @@ class pose_2d_preprocessor():
 		if self.gnss != []: # if we have previous positions to validate against
 			# check for sudden position jumps
 			dtime = time_stamp - self.gnss[-1][0]
+
 			ddist = sqrt((easting - self.gnss[-1][1])**2 + (northing - self.gnss[-1][2])**2)
-			max_dist = self.max_speed *dtime
+			max_dist = float(self.max_speed) * dtime
 			if ddist > 2*max_dist: # if distance larger than 2 * theoretical maximum distance
 				valid = 0
 				print "  GNSS unexpected position jump %.1f m at time stamp: %.3f: E%.3f, N%.3f" % (ddist, time_stamp, easting, northing)
