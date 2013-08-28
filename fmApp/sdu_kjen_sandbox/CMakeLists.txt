@@ -4,7 +4,7 @@ project(sdu_kjen_sandbox)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS action_primitives generic_smach msgs roscpp rospy smach smach_ros wiimote_interface)
+find_package(catkin REQUIRED COMPONENTS action_primitives generic_smach msgs roscpp rospy wiimote_interface)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -50,7 +50,7 @@ catkin_python_setup()
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES sdu_kjen_sandbox
- CATKIN_DEPENDS action_primitives generic_smach msgs roscpp rospy smach smach_ros wiimote_interface
+ CATKIN_DEPENDS action_primitives generic_smach msgs roscpp rospy wiimote_interface
 #  DEPENDS system_lib
 )
 
