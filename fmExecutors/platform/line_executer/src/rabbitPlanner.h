@@ -15,6 +15,7 @@
 #include <tf/transform_broadcaster.h>
 #include <actionlib/server/simple_action_server.h>
 #include <line_executer/follow_pathAction.h>
+#include <geometry_msgs/TwistStamped.h>
 
 class rabbitPlanner{
 public:
@@ -37,8 +38,9 @@ public:
 	void actionExecute(const line_executer::follow_pathGoalConstPtr& goal);
 
 	ros::Publisher path_publisher;
+	ros::Publisher cmd_vel_publisher;
 
-
+	double forward_velocity;
 private:
 
 	bool locateVehicle();
@@ -58,6 +60,10 @@ private:
 	tf::Vector3 B;
 
 	ros::NodeHandle nh;
+	geometry_msgs::TwistStamped vel_msg;
+
+	tf::Quaternion base_orientation;
+
 
 	tf::StampedTransform transform;
 

@@ -109,23 +109,52 @@ bool rabbitPlanner::planRabbit()
 			}else if(rabbit_type == 0)
 			{
 
-				double distance_error = rabbit.distance(base);
-				if(distance_error < 0 )
+
+
+				double target_dist = (base-rabbit).length();
+
+				rabbit = rabbit + (deltaRabbit)*AB.normalize();
+
+				tf::Vector3 direction_vector = rabbit - base;
+
+				double target_orientation = atan2(direction_vector[1],direction_vector[0]);
+				while(target_orientation >= M_PI*2 )
 				{
-					distance_error *= -1;
+					target_orientation -= M_PI*2;
 				}
-				double angle_error = (B-rabbit).angle(A-base) - M_PI;
-				if(angle_error < 0)
+
+				while(target_orientation < 0 )
 				{
-					angle_error *= -1;
+					target_orientation += M_PI*2;
 				}
-				double resu = (angle_error/angle_scale + distance_error/distance_scale);
-				if(resu < 1)
+
+				double target_error = target_orientation - tf::getYaw(base_orientation);
+
+				while(target_error < -M_PI)
 				{
-					resu = 1;
+					target_error += 2*M_PI;
 				}
-				ROS_INFO_THROTTLE(0.5,"Rabbit distance error is %.4f angle error is %.4f",distance_error,angle_error);
-				rabbit = (B-rabbit) / resu + rabbit;
+
+				while(target_error > M_PI)
+				{
+					target_error -= 2*M_PI;
+				}
+
+				//ROS_INFO_THROTTLE(0.5,"base_orientation: %.4f heading: %.4f, err: %.4f",tf::getYaw(base_orientation),target_orientation,target_error);
+				ROS_INFO_THROTTLE(0.5,"angular: %.4f linear: %.4f",target_error,target_dist);
+				//((double angle_error = atan2(rabbit[1]-base[1],rabbit[0]-base[0]);
+				ROS_INFO_THROTTLE(0.5,"angdist: %.4f",target_error*angle_scale + target_dist*distance_scale);
+				//ROS_INFO_THROTTLE(0.5,"Rabbit distance error is %.4f angle error is %.4f",distance_error,angle_error);
+				//ROS_INFO_THROTTLE(0.5,"A %.4f %.4f B %.4f %.4f \n Base %.4f %.4f Rabbit %.4f %.4f",A[0],A[1],B[0],B[1],base[0],base[1],rabbit[0],rabbit[1]);
+
+				//vel_msg.twist.linear.x = forward_velocity;
+				//vel_msg.twist.angular.z = angle_error;
+				vel_msg.twist.linear.x = forward_velocity;
+				vel_msg.twist.angular.z = target_error*angle_scale + target_dist*distance_scale;
+				//vel_msg.header.stamp = ros::Time::now();
+				cmd_vel_publisher.publish(vel_msg);
+
+
 			}else{
 				ROS_ERROR("RABBIT WENT BACK TO ITS HOLE! WRONG 'rabbit_type' ");
 			}
@@ -322,6 +351,7 @@ bool rabbitPlanner::locateVehicle()
 		tf_listener.lookupTransform(odom_frame.c_str(),vehicle_frame.c_str(),ros::Time(0), transform);
 
 		base = transform.getOrigin();
+		base_orientation = transform.getRotation();
 		ret = true;
 	}
 	catch (tf::TransformException& ex){
@@ -353,6 +383,9 @@ void rabbitPlanner::place_safe_rabbit()
 	catch (tf::TransformException& ex){
 		ROS_WARN("%s",ex.what());
 	}
+	vel_msg.twist.linear.x = 0;
+	vel_msg.twist.angular.z = 0;
+	cmd_vel_publisher.publish(vel_msg);
 }
 
 

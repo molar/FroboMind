@@ -26,16 +26,18 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 
 	std::string filepath,path_pub_topic;
-
+	std::string vel_topic;
 	rabbit = new rabbitPlanner("follow_path");
 
 	nh.param<std::string>("path_publisher_topic",path_pub_topic,"/fmExecutors/path");
+	nh.param<std::string>("vel_publisher_topic",vel_topic,"/fmSignals/cmd_vel");
 	//base_projected_to_A_B / deltaRabbit = rabbit
 	nh.param<double>("deltaRabbit", rabbit->deltaRabbit, 2);
 	//Waypoint threshold (0 = change waypoint when rabbit > B has been passed ; 1 = change waypoint when rabbit >= B-1 has been passed)
 	nh.param<double>("deltaWaypoint", rabbit->deltaWaypoint, 0);
 	nh.param<double>("angle_scale", rabbit->angle_scale, 1);
 	nh.param<double>("distance_scale", rabbit->distance_scale, 1);
+	nh.param<double>("forward_velocity", rabbit->forward_velocity, 0.5);
 
 	nh.param<int>("rabbit_type", rabbit->rabbit_type, 0);
 
@@ -45,6 +47,7 @@ int main(int argc, char **argv)
 
 	// latched topic so new subscriber get the most recent path
 	rabbit->path_publisher = nh.advertise<nav_msgs::Path>(path_pub_topic.c_str(),5,true);
+	rabbit->cmd_vel_publisher = nh.advertise<geometry_msgs::TwistStamped>(vel_topic.c_str(),5);
 
 	dynamic_reconfigure::Server<line_executer::rabbitPlannerConfig> server;
 
