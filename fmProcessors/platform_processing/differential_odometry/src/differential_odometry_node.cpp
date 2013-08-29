@@ -307,16 +307,18 @@ public:
    			//since all odometry is 6DOF we'll need a quaternion created from yaw
 			geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(theta);
 
-			// publish the transform message
-			odom_trans.header.stamp = time_now;
-			odom_trans.header.frame_id = odom_frame;
-			odom_trans.child_frame_id = base_frame;
-			odom_trans.transform.translation.x = x;
-			odom_trans.transform.translation.y = y;
-			odom_trans.transform.translation.z = 0.0;
-			odom_trans.transform.rotation = odom_quat;
-			odom_broadcaster.sendTransform(odom_trans);
-
+			if(publish_tf)
+			{
+				// publish the transform message
+				odom_trans.header.stamp = time_now;
+				odom_trans.header.frame_id = odom_frame;
+				odom_trans.child_frame_id = base_frame;
+				odom_trans.transform.translation.x = x;
+				odom_trans.transform.translation.y = y;
+				odom_trans.transform.translation.z = 0.0;
+				odom_trans.transform.rotation = odom_quat;
+				odom_broadcaster.sendTransform(odom_trans);
+			}
 			// publish odometry message
 			odom.header.stamp = time_now;
 			odom.header.frame_id = odom_frame;
@@ -324,7 +326,7 @@ public:
 			odom.pose.pose.position.y = y;
 			odom.pose.pose.orientation = odom_quat;
 			double dt = (l_time_latest - l_time_prev).toSec(); // assuming that left and right have the same interval
-			odom.twist.twist.linear.x  = dx/dt; 
+			odom.twist.twist.linear.x  = dx/dt;
 			odom.twist.twist.angular.z = dtheta/dt;
 			odom_pub.publish(odom);
 		}
@@ -343,6 +345,8 @@ public:
 	ros::Publisher odom_pub;
 	tf::TransformBroadcaster odom_broadcaster;
 	std::string base_frame,odom_frame;
+
+	bool publish_tf;
 
 private:
 	double tick_to_meter_left, tick_to_meter_right, max_ticks_per_update, wheel_dist;
@@ -383,6 +387,7 @@ int main(int argc, char** argv) {
 	nh.param<string>("enc_right_sub", subscribe_enc_r, "/fmInformation/encoder_right");
 	nh.param<string>("imu_sub", subscribe_imu, "/fmInformation/imu");
 
+
 	// robot parameters
 	nh.param<double>("/diff_steer_wheel_radius", wheel_radius, 0.25);
 	nh.param<double>("/diff_steer_wheel_ticks_per_rev", wheel_ticks_rev, 360);
@@ -403,6 +408,10 @@ int main(int argc, char** argv) {
 		tick_to_meter_right = tick_to_meter_left;
 	}
 	// other parameters
+
+	bool publish_tf;
+	nh.param<bool>("publish_tf", publish_tf, true);
+
 	std::string encoder_output_str;
 	nh.param<string>("encoder_output", encoder_output_str, "not initialized");
 	if ( encoder_output_str.compare ("relative") == 0)
@@ -487,7 +496,7 @@ int main(int argc, char** argv) {
 
 	// init class
 	SimpleOdom p(tick_to_meter_left, tick_to_meter_right, max_ticks_per_update, wheel_dist, encoder_output, yaw_source, yaw_axis);
-
+	p.publish_tf = publish_tf;
 	// subscriber callback functions
 	s1 = nh.subscribe(subscribe_enc_l,15,&SimpleOdom::processLeftEncoder,&p);
 	s2 = nh.subscribe(subscribe_enc_r,15,&SimpleOdom::processRightEncoder,&p);
