@@ -34,7 +34,7 @@
 
 ros::Timer can_tx_timer;
 msgs::steering_angle_cmd aes25_msg;
-geometry_msgs::Twist twist_cmd_out;
+geometry_msgs::TwistStamped twist_cmd_out;
 ros::Publisher wheel_pub;
 ros::Publisher twist_pub;
 
@@ -49,9 +49,10 @@ void twistmsgCallbackHandler(const geometry_msgs::TwistStampedConstPtr& twist_ms
 
 	double omega = twist_msg->twist.angular.z;
 
-	aes25_msg.steering_angle = atan2(omega*L,V);
+	aes25_msg.steering_angle = -atan2(omega*L,V);
 
-	twist_cmd_out.linear.x = V;
+	twist_cmd_out.twist.linear.x = V;
+	twist_cmd_out.header.stamp = ros::Time::now();
 
 	twist_pub.publish(twist_cmd_out);
 	wheel_pub.publish(aes25_msg);
@@ -75,14 +76,15 @@ int main(int argc, char **argv) {
 	nh.param<double> ("axle_distance_front_rear",vehicle_length,1.56);
 
 	wheel_pub = nh.advertise<msgs::steering_angle_cmd> (ASubot_wheel_publisher_topic.c_str(),1,1);
-	twist_pub = nh.advertise<geometry_msgs::Twist>(twist_publisher_topic,1,1);
+	twist_pub = nh.advertise<geometry_msgs::TwistStamped>(twist_publisher_topic,1,1);
 	ros::Subscriber twist_sub = nh.subscribe<geometry_msgs::TwistStamped> (twist_subscriber_topic.c_str(), 1, &twistmsgCallbackHandler);
 
 	aes25_msg.header.stamp = ros::Time::now();
 
 
 	aes25_msg.steering_angle = 0;
-	twist_cmd_out.linear.x = 0;
+	twist_cmd_out.header.stamp = ros::Time::now();
+	twist_cmd_out.twist.linear.x = 0;
 	wheel_pub.publish(aes25_msg);
 	twist_pub.publish(twist_cmd_out);
 

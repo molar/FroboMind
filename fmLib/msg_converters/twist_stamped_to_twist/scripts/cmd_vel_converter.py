@@ -41,7 +41,7 @@ class CmdVelConverter():
         self.twist_sub = rospy.Subscriber("/fmSignals/cmd_vel", TwistStamped, self.onTwist )
         self.deadman_sub = rospy.Subscriber("/fmSignals/deadman", Bool, self.onDeadman )
         self.twist = Twist()
-        self.deadman = False
+        self.deadman = True
         
  
     def onTwist(self,msg):
