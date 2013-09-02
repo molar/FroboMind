@@ -49,7 +49,7 @@ void twistmsgCallbackHandler(const geometry_msgs::TwistStampedConstPtr& twist_ms
 
 	double omega = twist_msg->twist.angular.z;
 
-	aes25_msg.steering_angle = -atan2(omega*L,V);
+	aes25_msg.steering_angle = atan2(omega*L,V);
 
 	twist_cmd_out.twist.linear.x = V;
 	twist_cmd_out.header.stamp = ros::Time::now();
