@@ -4,7 +4,7 @@ project(frobolab_frobit_demo)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS rospy msgs keyboard_interface generic_smach action_primitives)
+find_package(catkin REQUIRED COMPONENTS rospy msgs smach smach_ros keyboard_interface generic_smach action_primitives)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -47,7 +47,7 @@ find_package(catkin REQUIRED COMPONENTS rospy msgs keyboard_interface generic_sm
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES sdu_frobit
-  CATKIN_DEPENDS rospy msgs  keyboard_interface generic_smach action_primitives
+  CATKIN_DEPENDS rospy msgs smach smach_ros keyboard_interface generic_smach action_primitives
 #  DEPENDS system_lib
 )
 
